@@ -86,8 +86,8 @@ class BaseCAM:
 
         if eigen_smooth:
             cam = get_2d_projection(weighted_activations)
-        else:
-            cam = weighted_activations.sum(axis=1)
+        # else:
+        #     cam = weighted_activations.sum(axis=1)
         return cam
 
     def forward(
