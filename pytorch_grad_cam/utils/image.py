@@ -162,6 +162,7 @@ def show_factorization_on_image(img: np.ndarray,
 def scale_cam_image(cam, target_size=None):
     result = []
     for img in cam:
+        print(img.shape)
         img = img - np.min(img)
         img = img / (1e-7 + np.max(img))
         if target_size is not None:
@@ -169,6 +170,7 @@ def scale_cam_image(cam, target_size=None):
                 img = zoom(np.float32(img), [
                            (t_s / i_s) for i_s, t_s in zip(img.shape, target_size[::-1])])
             else:
+                print(img.shape)
                 img = cv2.resize(np.float32(img), target_size)
 
         result.append(img)
@@ -177,14 +179,77 @@ def scale_cam_image(cam, target_size=None):
     return result
 
 
+# def scale_accross_batch_and_channels(tensor, target_size):
+#     batch_size, channel_size = tensor.shape[:2]
+#     reshaped_tensor = tensor.reshape(
+#         batch_size * channel_size, *tensor.shape[2:])
+#     result = scale_cam_image(reshaped_tensor, target_size)
+#     result = result.reshape(
+#         batch_size,
+#         channel_size,
+#         target_size[1],
+#         target_size[0])
+#     return result
+
+from scipy.ndimage import zoom
+
+# def scale_accross_batch_and_channels(tensor, target_size):
+#     B, S, F, H, W = tensor.shape
+#     print(target_size)
+#     reshaped_tensor = tensor.reshape(B*S*F, H, W)  # flatten batch × slices × frames
+#     result = []
+
+#     for img in reshaped_tensor:
+#         # Always use zoom to resize to target_size
+#         zoom_factors = [target_size[1]/img.shape[0], target_size[0]/img.shape[1]]
+#         img_resized = zoom(img, zoom_factors, order=1)  # bilinear interpolation
+#         result.append(img_resized)
+
+#     result = np.stack(result)
+#     result = result.reshape(B, S, F, target_size[1], target_size[0])
+#     print(result.shape)
+#     return result
+
 def scale_accross_batch_and_channels(tensor, target_size):
-    batch_size, channel_size = tensor.shape[:2]
-    reshaped_tensor = tensor.reshape(
-        batch_size * channel_size, *tensor.shape[2:])
-    result = scale_cam_image(reshaped_tensor, target_size)
-    result = result.reshape(
-        batch_size,
-        channel_size,
-        target_size[1],
-        target_size[0])
+    B, S, F, H, W = tensor.shape
+    result = []
+
+    for b in range(B):
+        for s in range(S):
+            for f in range(F):
+                img = tensor[b, s, f]  # shape: [H, W]
+                zoom_factors = [target_size[1]/H, target_size[0]/W]
+                img_resized = zoom(img, zoom_factors, order=1)  # bilinear
+                result.append(img_resized)
+
+    # Stack and reshape back to [B, S, F, target_H, target_W]
+    result = np.stack(result)
+    result = result.reshape(B, S, F, target_size[1], target_size[0])
     return result
+
+# def scale_accross_batch_and_channels(tensor, target_size):
+#     B, S, F, H, W = tensor.shape
+#     print(target_size)
+#     reshaped_tensor = tensor.reshape(B*S*F, H, W)  # flatten batch × slices × frames
+#     result = []
+#     for b in range(B):
+#         for s in range(S):
+#             for f in range(F):
+#                 img = tensor[b, s, f]
+#                 zoom_factors = [target_size[1]/img.shape[0], target_size[0]/img.shape[1]]
+#                 img_resized = zoom(img, zoom_factors, order=1)
+#                 result.append(img_resized)
+
+#     result = np.array(result)
+#     result = result.reshape(B, S, F, target_size[1], target_size[0])
+#     print(result.shape)
+#     return result
+
+# def scale_accross_batch_and_channels(tensor, target_size):
+#     # tensor: [B, S, F, H, W]
+#     B, S, F, H, W = tensor.shape
+#     reshaped_tensor = tensor.reshape(B * S * F, H, W)  # flatten batch × slices × frames
+#     print(reshaped_tensor.shape)
+#     result = scale_cam_image(reshaped_tensor, target_size)
+#     result = result.reshape(B, S, F, target_size[1], target_size[0])  # reshape back
+#     return result

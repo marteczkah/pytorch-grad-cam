@@ -70,7 +70,9 @@ class FullGrad(BaseCAM):
             bias_grad = np.abs(bias * grads)
             result = scale_accross_batch_and_channels(
                 bias_grad, target_size)
+            print('post scaling: ', result.shape)
             result = np.sum(result, axis=1)
+            print('does sum: ', result.shape)
             cam_per_target_layer.append(result[:, None, :])
         cam_per_target_layer = np.concatenate(cam_per_target_layer, axis=1)
         if eigen_smooth:
@@ -84,8 +86,10 @@ class FullGrad(BaseCAM):
                 cam_per_target_layer,
                 target_size)
         else:
-            cam_per_target_layer = np.sum(
-                cam_per_target_layer, axis=1)[:, None, :]
+            print('WHERE ARE WE')
+            print(cam_per_target_layer.shape)
+            # cam_per_target_layer = np.sum(
+                # cam_per_target_layer, axis=1)[:, None, :]
 
         return cam_per_target_layer
 

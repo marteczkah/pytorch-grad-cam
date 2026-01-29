@@ -86,9 +86,8 @@ class BaseCAM:
 
         if eigen_smooth:
             cam = get_2d_projection(weighted_activations)
-        print(cam.shape)
-        # else:
-        #     cam = weighted_activations.sum(axis=1)
+        else:
+            cam = weighted_activations.sum(axis=1)
         return cam
 
     def forward(
@@ -128,7 +127,8 @@ class BaseCAM:
         # use all conv layers for example, all Batchnorm layers,
         # or something else.
         cam_per_layer = self.compute_cam_per_layer(input_tensor, targets, eigen_smooth)
-        return self.aggregate_multi_layers(cam_per_layer)
+        # return self.aggregate_multi_layers(cam_per_layer)
+        return cam_per_layer
 
     def get_target_width_height(self, input_tensor: torch.Tensor) -> Tuple[int, int]:
         if len(input_tensor.shape) == 4:
@@ -172,7 +172,6 @@ class BaseCAM:
     def aggregate_multi_layers(self, cam_per_target_layer: np.ndarray) -> np.ndarray:
         cam_per_target_layer = np.concatenate(cam_per_target_layer, axis=1)
         cam_per_target_layer = np.maximum(cam_per_target_layer, 0)
-        print(cam_per_target_layer.shape)
         result = np.mean(cam_per_target_layer, axis=1)
         return scale_cam_image(result)
 

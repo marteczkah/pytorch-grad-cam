@@ -20,6 +20,7 @@ class GradCAM(BaseCAM):
                         activations,
                         grads):
         # 2D image
+        print(grads.shape)
         if len(grads.shape) == 4:
             return np.mean(grads, axis=(2, 3))
         
